@@ -2,6 +2,7 @@ import json
 import git
 import secrets
 import os.path
+import os
 
 from pika import (
     PlainCredentials,
@@ -27,7 +28,10 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
     entrypoint = message["entrypoint"]
     repository = message["repository"]
 
-    download_path = os.path.join("/tmp", secrets.token_hex(16))
+    id_path = os.path.join("/tmp", id, )
+    download_path = os.path.join(id_path, "repository")
+
+    os.makedirs(download_path, exist_ok=True)
 
     git.Repo.clone_from(repository, to_path=download_path)
 
@@ -52,6 +56,30 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
                 delivery_mode=2,
             ),
         )
+
+
+def create_patch(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes):
+
+    message = json.loads(body)
+
+    id = message["id"]
+    source_path = message["source_path"]
+    procedure_line = message["procedure_line"]
+    response = message["response"]
+
+    patch = ContextParser.get_patch(source_path, procedure_line, response)
+
+    filename = source_path.split("/")[-1]
+
+    patch_dir = os.path.join("/tmp", id, "patch")
+    
+    os.makedirs(patch_dir, exist_ok=True)
+
+    patches_path = os.path.join(patch_dir, f"{filename}_{procedure_line}.patch")
+
+    with open(patches_path, "w") as f:
+        f.write(patch)
+        
 
 credentials = PlainCredentials(*RABBITMQ_CREDENTIALS)
 parameters = ConnectionParameters(
