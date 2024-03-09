@@ -1,6 +1,7 @@
 import json
 import os.path
 import subprocess
+import logging
 
 
 class InferReport:
@@ -48,5 +49,12 @@ class Infer:
         for vulnerability in full_report:
             infer_report = InferReport(vulnerability, source_path)
             results.append(infer_report)
+
+        logging.info(
+            "Runned Infer on %s.\nFound %d vulnerabilities: %s",
+            source_filename,
+            len(results),
+            results,
+        )
 
         return results

@@ -3,6 +3,8 @@ import git
 import secrets
 import os.path
 import os
+import logging
+
 
 from pika import (
     PlainCredentials,
@@ -19,16 +21,26 @@ from infer import Infer, InferReport
 
 from definitions import RABBITMQ_CREDENTIALS
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(module)s %(funcName)s %(message)s",
+)
+
 
 def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes):
     
     message = json.loads(body)
 
-    id = message["id"]
+    logging.info(f"Received message: {message}")
+
+    id = secrets.token_hex(16)
     entrypoint = message["entrypoint"]
     repository = message["repository"]
 
-    id_path = os.path.join("/tmp", id, )
+    id_path = os.path.join(
+        "/tmp",
+        id,
+    )
     download_path = os.path.join(id_path, "repository")
 
     os.makedirs(download_path, exist_ok=True)
@@ -56,7 +68,9 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
             reverse=True,
         )
 
-        vulnerabilities = list(filter(lambda vuln: vuln not in inherent_vulnerabilities, vulnerabilities))
+        vulnerabilities = list(
+            filter(lambda vuln: vuln not in inherent_vulnerabilities, vulnerabilities)
+        )
 
         prompt = ContextParser.get_prompt(inherent_vulnerabilities)
 
@@ -76,11 +90,14 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
                 delivery_mode=2,
             ),
         )
+        
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def create_patch(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes):
-
     message = json.loads(body)
+
+    logging.info(f"Received message: {message}")
 
     id = message["id"]
     source_path = message["source_path"]
@@ -92,14 +109,16 @@ def create_patch(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: b
     filename = source_path.split("/")[-1]
 
     patch_dir = os.path.join("/tmp", id, "patch")
-    
+
     os.makedirs(patch_dir, exist_ok=True)
 
     patches_path = os.path.join(patch_dir, f"{filename}_{procedure_line}.patch")
 
     with open(patches_path, "w") as f:
         f.write(patch)
-        
+    
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 credentials = PlainCredentials(*RABBITMQ_CREDENTIALS)
 parameters = ConnectionParameters(
