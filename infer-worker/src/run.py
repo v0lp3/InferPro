@@ -37,8 +37,28 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
 
     vulnerabilities: list[InferReport] = Infer.run_analyzer(download_path, entrypoint)
 
-    for vulnerability in vulnerabilities:
-        prompt, code = ContextParser.get_prompt(vulnerability)
+    unique_procedures = set(
+        map(lambda vuln: (vuln.source_path, vuln.procedure_line), vulnerabilities)
+    )
+
+    for procedure in unique_procedures:
+        source_path, procedure_line = procedure
+
+        inherent_vulnerabilities = sorted(
+            list(
+                filter(
+                    lambda vuln: vuln.source_path == source_path
+                    and vuln.procedure_line == procedure_line,
+                    vulnerabilities,
+                )
+            ),
+            key=lambda vuln: vuln.line,
+            reverse=True,
+        )
+
+        vulnerabilities = list(filter(lambda vuln: vuln not in inherent_vulnerabilities, vulnerabilities))
+
+        prompt = ContextParser.get_prompt(inherent_vulnerabilities)
 
         data = {
             "id": id,

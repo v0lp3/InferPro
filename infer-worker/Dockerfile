@@ -11,7 +11,9 @@ RUN apt-get update && \
       zlib1g-dev \
       python3 \
       python3-pip \
-      gcc
+      gcc \
+      git \
+      openssh-client
 
 # Download the Infer release
 RUN INFER_VERSION=v1.1.0; \
@@ -22,7 +24,7 @@ RUN INFER_VERSION=v1.1.0; \
     rm -f /infer && \
     ln -s ${PWD}/infer-linux64-$INFER_VERSION /infer
 
-RUN pip install tree_sitter GitPython
+RUN pip install tree_sitter GitPython diff_match_patch pika
 
 ENV PATH /infer/bin:${PATH}
 

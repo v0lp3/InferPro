@@ -15,7 +15,7 @@ class LanguageParser:
         return cls.__instance
 
     def __init__(self: "LanguageParser"):
-        library_path = "../lib/c-parser.so"
+        library_path = "/infer-worker/lib/c-parser.so"
 
         self.__language = Language(library_path, "c")
 
@@ -41,12 +41,12 @@ class LanguageParser:
     def get_source(self: "LanguageParser", filepath: str) -> str:
         self.__cache_file(filepath)
 
-        return self.__trees[filepath]["content"]
-    
+        return self.__trees[filepath]["content"].decode()
+
     def get_procedure(self: "LanguageParser", filepath: str, line: int) -> Node:
         tree = self.get_tree(filepath)
-        
-        query = self._language.query("(function_definition) @functions")
+
+        query = self.__language.query("(function_definition) @functions")
 
         for node in map(lambda node: node[0], query.captures(tree.root_node)):
             if node.start_point[0] <= line and node.end_point[0] >= line:
@@ -57,7 +57,7 @@ class LanguageParser:
 
     def extract_from_source(self: "LanguageParser", node: Node, filepath: str) -> str:
         if (source_file := self.get_source(filepath)) != None:
-            return source_file[node.start_byte : node.end_byte].decode()
+            return source_file[node.start_byte : node.end_byte]
 
         return None
 

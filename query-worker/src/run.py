@@ -22,7 +22,7 @@ def query_gemini(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: b
     message = json.loads(body)
     response = model.generate_content(INSTRUCTION + "\n\n" + message["query"])
 
-    # TODO: inserire collegamento database
+    message["response"] = response.text
 
 model = genai.GenerativeModel('gemini-pro')
 credentials = PlainCredentials(*RABBITMQ_CREDENTIALS)
