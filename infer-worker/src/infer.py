@@ -15,21 +15,32 @@ class InferReport:
         self.procedure_line = vulnerability["procedure_start_line"]
         self.source_path = os.path.join(source_path, vulnerability["file"])
         self.line = vulnerability["line"]
-    
+
     def __repr__(self) -> str:
         return f"InferReport(bug={self.bug_type}, src={self.source_path}, line={self.line}, procedure_line={self.procedure_line})"
 
 
 class Infer:
     @staticmethod
-    def run_analyzer(
-        source_path: str, source_filename: str
-    ) -> list[InferReport]:
+    def run_analyzer(source_path: str, source_filename: str) -> list[InferReport]:
+        command = ["infer", "run"]
 
-        cmd = "infer run --bufferoverrun --buck-clang --uninit --racerd --quandary --liveness --biabduction -- gcc".split(" ")
+        args = [
+            "--bufferoverrun",
+            "--buck-clang",
+            "--uninit",
+            "--racerd",
+            "--quandary",
+            "--liveness",
+            "--biabduction",
+        ]
+
+        compiler = ["gcc"]
+
+        cmd = command + args + ["--"] + compiler + [source_filename]
 
         subprocess.run(
-            cmd + [source_filename],
+            cmd,
             cwd=source_path,
             shell=False,
             stdout=subprocess.DEVNULL,

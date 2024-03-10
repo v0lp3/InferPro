@@ -10,7 +10,7 @@ from pika import (
     PlainCredentials,
     BlockingConnection,
     ConnectionParameters,
-    BasicProperties
+    BasicProperties,
 )
 
 from pika.channel import Channel
@@ -28,7 +28,6 @@ logging.basicConfig(
 
 
 def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes):
-    
     message = json.loads(body)
 
     logging.info(f"Received message: {message}")
@@ -77,10 +76,9 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
 
         data = {
             "id": id,
-            "bug_type": vulnerability.bug_type,
-            "qualifier": vulnerability.qualifier,
+            "source_path": source_path,
             "prompt": prompt,
-            "code": code,
+            "procedure_line": procedure_line,
         }
 
         ch.basic_publish(
@@ -135,13 +133,18 @@ cn = BlockingConnection(parameters)
 ch = cn.channel(1337)
 ch.basic_qos()
 
-ch.queue_declare(
-    queue="analyzing", durable=True, auto_delete=False
-)
+ch.queue_declare(queue="analyzing", durable=True, auto_delete=False)
+
+ch.queue_declare(queue="patching", durable=True, auto_delete=False)
 
 ch.basic_consume(
     queue="analyzing",
     on_message_callback=analyze,
+)
+
+ch.basic_consume(
+    queue="patching",
+    on_message_callback=create_patch,
 )
 
 ch.start_consuming()

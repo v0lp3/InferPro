@@ -57,7 +57,6 @@ class LanguageParser:
 
         return None
 
-
     def extract_from_source(self: "LanguageParser", node: Node, filepath: str) -> str:
         if (source_file := self.get_source(filepath)) != None:
             return source_file[node.start_byte : node.end_byte]
@@ -66,9 +65,8 @@ class LanguageParser:
 
 
 class ContextParser:
-
     @staticmethod
-    def get_prompt(report: InferReport):
+    def get_prompt(procedure_vulnerabilities: list[InferReport]):
         language__parser = LanguageParser()
         procedure_line = procedure_vulnerabilities[0].procedure_line
 
@@ -78,7 +76,9 @@ class ContextParser:
         )
 
         if node is not None:
-            vulnerable_code = language__parser.extract_from_source(node, report.source_path)
+            vulnerable_code = language__parser.extract_from_source(
+                node, procedure_vulnerabilities[0].source_path
+            )
             vulnerable_code_lines = vulnerable_code.split("\n")
 
             for report in procedure_vulnerabilities:
@@ -119,3 +119,4 @@ class ContextParser:
             source_path = source_path.split("repository/")[1]
             patch = difflib.unified_diff(source.splitlines(), patched_source.splitlines(), fromfile=source_path, tofile=source_path)
             return "\n".join(patch)
+        

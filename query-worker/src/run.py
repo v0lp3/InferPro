@@ -6,7 +6,7 @@ from pika import (
     PlainCredentials,
     BlockingConnection,
     ConnectionParameters,
-    BasicProperties
+    BasicProperties,
 )
 
 from time import sleep
@@ -25,7 +25,6 @@ genai.configure(api_key=GEMINI_TOKEN)
 
 
 def query_gemini(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes):
-    
     message = json.loads(body)
 
     logging.info(f"Received message: {message}")
@@ -73,9 +72,7 @@ ch = cn.channel(1337)
 
 ch.basic_qos()
 
-ch.queue_declare(
-    queue="querying", durable=True, auto_delete=False
-)
+ch.queue_declare(queue="querying", durable=True, auto_delete=False)
 
 ch.basic_consume(
     queue="querying",
