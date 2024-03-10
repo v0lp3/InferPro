@@ -25,7 +25,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(module)s %(funcName)s %(message)s",
 )
 
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="../static", template_folder="../templates")
 
 credentials = PlainCredentials(*RABBITMQ_CREDENTIALS)
 parameters = ConnectionParameters(
