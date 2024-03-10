@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import secrets
 import git
 
 from contextualizer import ContextParser
@@ -28,7 +27,7 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
 
     logging.info(f"Received message: {message}")
 
-    id = secrets.token_hex(16)
+    id = message["id"]
     entrypoint = message["entrypoint"]
     repository = message["repository"]
 
@@ -43,50 +42,57 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
 
     git.Repo.clone_from(repository, to_path=download_path)
 
-    vulnerabilities: list[InferReport] = Infer.run_analyzer(download_path, entrypoint)
+    try:
+        vulnerabilities: list[InferReport] = Infer.run_analyzer(
+            download_path, entrypoint
+        )
 
-    ContextParser.update_procedures_line(vulnerabilities)
+        ContextParser.update_procedures_line(vulnerabilities)
 
-    unique_procedures = set(
-        map(lambda vuln: (vuln.source_path, vuln.procedure_line), vulnerabilities)
-    )
+        unique_procedures = set(
+            map(lambda vuln: (vuln.source_path, vuln.procedure_line), vulnerabilities)
+        )
 
-    for procedure in unique_procedures:
-        source_path, procedure_line = procedure
+        for procedure in unique_procedures:
+            source_path, procedure_line = procedure
 
-        inherent_vulnerabilities = sorted(
-            list(
+            inherent_vulnerabilities = sorted(
+                list(
+                    filter(
+                        lambda vuln: vuln.source_path == source_path
+                        and vuln.procedure_line == procedure_line,
+                        vulnerabilities,
+                    )
+                ),
+                key=lambda vuln: vuln.line,
+                reverse=True,
+            )
+
+            vulnerabilities = list(
                 filter(
-                    lambda vuln: vuln.source_path == source_path
-                    and vuln.procedure_line == procedure_line,
-                    vulnerabilities,
+                    lambda vuln: vuln not in inherent_vulnerabilities, vulnerabilities
                 )
-            ),
-            key=lambda vuln: vuln.line,
-            reverse=True,
-        )
+            )
 
-        vulnerabilities = list(
-            filter(lambda vuln: vuln not in inherent_vulnerabilities, vulnerabilities)
-        )
+            prompt = ContextParser.get_prompt(inherent_vulnerabilities)
 
-        prompt = ContextParser.get_prompt(inherent_vulnerabilities)
+            data = {
+                "id": id,
+                "source_path": source_path,
+                "prompt": prompt,
+                "procedure_line": procedure_line,
+            }
 
-        data = {
-            "id": id,
-            "source_path": source_path,
-            "prompt": prompt,
-            "procedure_line": procedure_line,
-        }
-
-        ch.basic_publish(
-            exchange="",
-            routing_key="querying",
-            body=json.dumps(data),
-            properties=BasicProperties(
-                delivery_mode=2,
-            ),
-        )
+            ch.basic_publish(
+                exchange="",
+                routing_key="querying",
+                body=json.dumps(data),
+                properties=BasicProperties(
+                    delivery_mode=2,
+                ),
+            )
+    except:
+        logging.error(f"Failed to analyze {message}")
 
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -105,7 +111,7 @@ def create_patch(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: b
 
     filename = source_path.split("/")[-1]
 
-    patch_dir = os.path.join("/tmp", "storage", id, "patch")
+    patch_dir = os.path.join("/tmp", "storage", id, "patchs")
 
     os.makedirs(patch_dir, exist_ok=True)
 

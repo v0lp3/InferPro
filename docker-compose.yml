@@ -43,7 +43,12 @@ services:
     environment:
       - TZ=Europe/Rome
       - RABBITMQ_PASSWORD=
+      - FLASK_SECRET_KEY=
     restart: on-failure
     depends_on:
       rabbitmq:
         condition: service_healthy
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./storage:/storage:ro

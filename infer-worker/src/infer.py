@@ -62,7 +62,7 @@ class Infer:
             infer_report = InferReport(vulnerability, source_path)
             results.append(infer_report)
 
-        logging.info(
+        logging.debug(
             "Runned Infer on %s.\nFound %d vulnerabilities: %s",
             source_filename,
             len(results),

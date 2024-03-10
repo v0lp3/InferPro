@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <title>Infer Plus</title>
+        <link rel="stylesheet" href="static/style.css">
+
+    </head>
+    <body>
+        <div>
+            <div style="width: 500px; margin-bottom: 20px;">
+                <h1>Infer Plus</h1>
+                <h3><a href="/">Scan new repository</a> or <a href="/patchs">view your patchs</a></h3>
+            </div>
+
+            <form action="/analyze" method="POST">
+                <input type="text" placeholder="Repository URL" name="repository"><br>
+                <input type="text" placeholder="Entrypoint" name="entrypoint">
+                
+                <button>Submit</button>
+            </form>
+            
+        </div>
+    </body>
+</html>
