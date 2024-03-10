@@ -2,48 +2,56 @@ version: "3.9"
 services:
   rabbitmq:
     image: rabbitmq:3.13.0
-    environment:
-      - RABBITMQ_DEFAULT_PASS=
-      - RABBITMQ_DEFAULT_USER=user
     restart: always
     hostname: 'rabbitmq'
     volumes:
       - ./rabbitmq/data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 15s
       timeout: 120s
       retries: 10
+    secrets:
+      - rabbitmq_password
+
 
   query-worker:
     build: ./query-worker
     environment:
       - TZ=Europe/Rome
-      - RABBITMQ_PASSWORD=
-      - GEMINI_TOKEN=
+      - RABBITMQ_DEFAULT_PASS_FILE=/run/secrets/rabbitmq_password
+      - HTTP_PROXY_FILE=/run/secrets/http_proxy
+      - GEMINI_TOKEN_FILE=/run/secrets/gemini_token
     restart: on-failure
     depends_on:
       rabbitmq:
         condition: service_healthy
+    secrets:
+      - gemini_token
+      - rabbitmq_password
+      - http_proxy
 
   infer-worker:
     build: ./infer-worker
     environment:
       - TZ=Europe/Rome
-      - RABBITMQ_PASSWORD=
+      - RABBITMQ_DEFAULT_PASS_FILE=/run/secrets/rabbitmq_password
     restart: on-failure
     depends_on:
       rabbitmq:
         condition: service_healthy
     volumes:
       - ./storage:/tmp/storage
+    secrets:
+      - rabbitmq_password
 
   frontend:
     build: ./frontend
     environment:
       - TZ=Europe/Rome
-      - RABBITMQ_PASSWORD=
-      - FLASK_SECRET_KEY=
+      - RABBITMQ_DEFAULT_PASS_FILE=/run/secrets/rabbitmq_password
+      - FLASK_SECRET_KEY_FILE=/run/secrets/flask_secret_key
     restart: on-failure
     depends_on:
       rabbitmq:
@@ -52,3 +60,16 @@ services:
       - "5000:5000"
     volumes:
       - ./storage:/storage:ro
+    secrets:
+      - rabbitmq_password
+      - flask_secret_key
+    
+secrets:
+   rabbitmq_password:
+     file: secrets/rabbitmq.txt
+   flask_secret_key:
+     file: secrets/flask.txt
+   gemini_token:
+     file: secrets/gemini_token.txt
+   http_proxy:
+     file: secrets/proxy.txt
