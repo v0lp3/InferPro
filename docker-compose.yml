@@ -1,0 +1,49 @@
+version: "3.9"
+services:
+  rabbitmq:
+    image: rabbitmq:3.13.0
+    environment:
+      - RABBITMQ_DEFAULT_PASS=
+      - RABBITMQ_DEFAULT_USER=user
+    restart: always
+    hostname: 'rabbitmq'
+    volumes:
+      - ./rabbitmq/data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 120s
+      retries: 10
+
+  query-worker:
+    build: ./query-worker
+    environment:
+      - TZ=Europe/Rome
+      - RABBITMQ_PASSWORD=
+      - GEMINI_TOKEN=
+    restart: on-failure
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  infer-worker:
+    build: ./infer-worker
+    environment:
+      - TZ=Europe/Rome
+      - RABBITMQ_PASSWORD=
+    restart: on-failure
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./storage:/tmp/storage
+
+  frontend:
+    build: ./frontend
+    environment:
+      - TZ=Europe/Rome
+      - RABBITMQ_PASSWORD=
+    restart: on-failure
+    depends_on:
+      rabbitmq:
+        condition: service_healthy

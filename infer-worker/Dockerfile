@@ -24,7 +24,7 @@ RUN INFER_VERSION=v1.1.0; \
     rm -f /infer && \
     ln -s ${PWD}/infer-linux64-$INFER_VERSION /infer
 
-RUN pip install tree_sitter GitPython diff_match_patch pika
+RUN pip install tree_sitter GitPython pika
 
 ENV PATH /infer/bin:${PATH}
 

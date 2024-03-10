@@ -1,5 +1,5 @@
 import logging
-import diff_match_patch as dmp_module
+import difflib
 
 from infer import InferReport
 from tree_sitter import Language, Parser, Tree, Node
@@ -113,10 +113,9 @@ class ContextParser:
             end = node.end_byte
 
             patched_source = source[:start] + response + source[end:]
+            
+            logging.info("Original file: %s\nPatched file: %s", source, patched_source)
 
-            dmp = dmp_module.diff_match_patch()
-
-            logging.info("Original file: %s, patched file: %s", source, patched_source)
-
-            patch = dmp.patch_make(source, patched_source)
-            return dmp.patch_toText(patch)
+            source_path = source_path.split("repository/")[1]
+            patch = difflib.unified_diff(source.splitlines(), patched_source.splitlines(), fromfile=source_path, tofile=source_path)
+            return "\n".join(patch)

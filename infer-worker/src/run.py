@@ -39,6 +39,7 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
 
     id_path = os.path.join(
         "/tmp",
+        "storage",
         id,
     )
     download_path = os.path.join(id_path, "repository")
@@ -108,7 +109,7 @@ def create_patch(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: b
 
     filename = source_path.split("/")[-1]
 
-    patch_dir = os.path.join("/tmp", id, "patch")
+    patch_dir = os.path.join("/tmp", "storage", id, "patch")
 
     os.makedirs(patch_dir, exist_ok=True)
 

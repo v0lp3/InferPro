@@ -7,4 +7,10 @@ RABBITMQ_CREDENTIALS = (
 
 GEMINI_TOKEN = environ.get("GEMINI_TOKEN", "")
 
-INSTRUCTION = "Replace the unsafe code to enhance security and produce valid code in C language. Returns only the modified function under markdown c code block:"
+INSTRUCTION = """Main task: Replace the unsafe code to enhance security in C language.
+Output: Return only the modified function under markdown c code block.
+Notes:  
+- The code should be valid and secure.
+- The code should have minimal changes
+- The code should have the same functionality as the original code
+"""
