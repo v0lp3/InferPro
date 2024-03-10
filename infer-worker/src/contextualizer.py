@@ -66,24 +66,49 @@ class LanguageParser:
 
 class ContextParser:
     @staticmethod
+    def update_procedures_line(reports: list[InferReport]):
+        language_parser = LanguageParser()
+
+        for i, report in enumerate(reports):
+            logging.debug(
+                "(old) report bug @line %d, function @line %d",
+                report.line,
+                report.procedure_line,
+            )
+
+            traced_procedure = report.bug_trace[-1]
+            reports[i].line = traced_procedure["line_number"]
+
+            node = language_parser.get_procedure(report.source_path, report.line)
+
+            if node is not None:
+                reports[i].procedure_line = node.start_point[0]
+                logging.debug(
+                    "(new) report bug @line %d, function @line %d",
+                    report.line,
+                    report.procedure_line,
+                )
+
+    @staticmethod
     def get_prompt(procedure_vulnerabilities: list[InferReport]):
-        language__parser = LanguageParser()
+        language_parser = LanguageParser()
         procedure_line = procedure_vulnerabilities[0].procedure_line
 
-        node = language__parser.get_procedure(
+        node = language_parser.get_procedure(
             procedure_vulnerabilities[0].source_path,
             procedure_line,
         )
 
         if node is not None:
-            vulnerable_code = language__parser.extract_from_source(
+            vulnerable_code = language_parser.extract_from_source(
                 node, procedure_vulnerabilities[0].source_path
             )
             vulnerable_code_lines = vulnerable_code.split("\n")
 
             for report in procedure_vulnerabilities:
                 vulnerable_code_lines.insert(
-                    report.line - procedure_line, f"// [Unsafe] {report.bug_type}: {report.qualifier}"
+                    report.line - procedure_line,
+                    f"// [Unsafe] {report.bug_type}: {report.qualifier}",
                 )
 
             prompt = "\n".join(vulnerable_code_lines)
@@ -98,14 +123,14 @@ class ContextParser:
             "Creating patch for file %s, function @line %d", source_path, procedure_line
         )
 
-        language__parser = LanguageParser()
+        language_parser = LanguageParser()
 
-        node = language__parser.get_procedure(
+        node = language_parser.get_procedure(
             source_path,
             procedure_line,
         )
 
-        source = language__parser.get_source(source_path)
+        source = language_parser.get_source(source_path)
         patched_source = ""
 
         if node is not None:
@@ -113,10 +138,14 @@ class ContextParser:
             end = node.end_byte
 
             patched_source = source[:start] + response + source[end:]
-            
+
             logging.info("Original file: %s\nPatched file: %s", source, patched_source)
 
             source_path = source_path.split("repository/")[1]
-            patch = difflib.unified_diff(source.splitlines(), patched_source.splitlines(), fromfile=source_path, tofile=source_path)
+            patch = difflib.unified_diff(
+                source.splitlines(),
+                patched_source.splitlines(),
+                fromfile=source_path,
+                tofile=source_path,
+            )
             return "\n".join(patch)
-        

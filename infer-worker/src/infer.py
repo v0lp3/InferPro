@@ -12,6 +12,7 @@ class InferReport:
     def __init__(self: "InferReport", vulnerability: dict, source_path: str):
         self.bug_type = vulnerability["bug_type"]
         self.qualifier = vulnerability["qualifier"]
+        self.bug_trace = vulnerability["bug_trace"]
         self.procedure_line = vulnerability["procedure_start_line"]
         self.source_path = os.path.join(source_path, vulnerability["file"])
         self.line = vulnerability["line"]

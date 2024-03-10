@@ -29,7 +29,9 @@ def query_gemini(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: b
 
     logging.info(f"Received message: {message}")
 
-    response = model.generate_content(INSTRUCTION + "\n```c\n" + message["prompt"] + "```")
+    response = model.generate_content(
+        INSTRUCTION + "\n```c\n" + message["prompt"] + "```"
+    )
 
     to_ack = True
 
@@ -48,12 +50,11 @@ def query_gemini(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: b
     except:
         logging.info(f"Failed to generate a response for {message}")
         to_ack = False
-    
+
     sleep(5)
-    
+
     if to_ack:
         ch.basic_ack(delivery_tag=method.delivery_tag)
-    
 
 
 model = genai.GenerativeModel("gemini-pro")

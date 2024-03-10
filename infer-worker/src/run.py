@@ -49,6 +49,8 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
 
     vulnerabilities: list[InferReport] = Infer.run_analyzer(download_path, entrypoint)
 
+    ContextParser.update_procedures_line(vulnerabilities)
+
     unique_procedures = set(
         map(lambda vuln: (vuln.source_path, vuln.procedure_line), vulnerabilities)
     )
@@ -89,7 +91,7 @@ def analyze(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes)
                 delivery_mode=2,
             ),
         )
-        
+
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
@@ -115,7 +117,7 @@ def create_patch(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: b
 
     with open(patches_path, "w") as f:
         f.write(patch)
-    
+
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
