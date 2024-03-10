@@ -2,19 +2,16 @@ import json
 import logging
 import google.generativeai as genai
 
+from time import sleep
+from definitions import GEMINI_TOKEN, INSTRUCTION, RABBITMQ_CREDENTIALS
 from pika import (
-    PlainCredentials,
+    BasicProperties,
     BlockingConnection,
     ConnectionParameters,
-    BasicProperties,
+    PlainCredentials,
 )
-
-from time import sleep
-
 from pika.channel import Channel
 from pika.spec import Basic, BasicProperties
-
-from definitions import INSTRUCTION, RABBITMQ_CREDENTIALS, GEMINI_TOKEN
 
 logging.basicConfig(
     level=logging.INFO,

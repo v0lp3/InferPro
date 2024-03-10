@@ -1,8 +1,8 @@
-import logging
 import difflib
+import logging
 
 from infer import InferReport
-from tree_sitter import Language, Parser, Tree, Node
+from tree_sitter import Language, Node, Parser, Tree
 
 
 class LanguageParser:

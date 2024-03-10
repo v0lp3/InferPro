@@ -1,25 +1,21 @@
 import json
-import git
-import secrets
-import os.path
-import os
 import logging
-
-
-from pika import (
-    PlainCredentials,
-    BlockingConnection,
-    ConnectionParameters,
-    BasicProperties,
-)
-
-from pika.channel import Channel
-from pika.spec import Basic, BasicProperties
+import os
+import secrets
+import git
 
 from contextualizer import ContextParser
+from definitions import RABBITMQ_CREDENTIALS
 from infer import Infer, InferReport
 
-from definitions import RABBITMQ_CREDENTIALS
+from pika import (
+    BasicProperties,
+    BlockingConnection,
+    ConnectionParameters,
+    PlainCredentials,
+)
+from pika.channel import Channel
+from pika.spec import Basic, BasicProperties
 
 logging.basicConfig(
     level=logging.INFO,

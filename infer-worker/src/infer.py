@@ -1,7 +1,7 @@
 import json
+import logging
 import os.path
 import subprocess
-import logging
 
 
 class InferReport:
