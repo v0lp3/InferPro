@@ -2,8 +2,8 @@ import json
 import logging
 import google.generativeai as genai
 
-from time import sleep
-from definitions import GEMINI_TOKEN, INSTRUCTION, RABBITMQ_CREDENTIALS
+from time import sleep, time
+from definitions import GEMINI_TOKEN, INSTRUCTION, RABBITMQ_CREDENTIALS, Error
 from pika import (
     BasicProperties,
     BlockingConnection,
@@ -21,38 +21,54 @@ logging.basicConfig(
 genai.configure(api_key=GEMINI_TOKEN)
 
 
+errors = Error(0, int(time()))
+
 def query_gemini(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes):
     message = json.loads(body)
+    timestamp = int(time())
 
     logging.info(f"Received message: {message}")
 
-    response = model.generate_content(
-        INSTRUCTION + "\n```c\n" + message["prompt"] + "```"
-    )
-
-    to_ack = True
+    if errors.count > 5 and errors.timestamp - timestamp < 60 * 10:
+        logging.info(f"Too many errors, sleeping for now")
+        sleep(60)
+        return
 
     try:
-        message["response"] = response.text.split("```c\n")[1].split("```")[0]
-
-        ch.basic_publish(
-            exchange="",
-            routing_key="patching",
-            body=json.dumps(message),
-            properties=BasicProperties(
-                delivery_mode=2,
-            ),
+        response = model.generate_content(
+            INSTRUCTION + "\n```c\n" + message["prompt"] + "```"
         )
 
+        errors = Error(0, timestamp)
+
+        to_ack = True
+
+        try:
+            message["response"] = response.text.split("```c\n")[1].split("```")[0]
+
+            ch.basic_publish(
+                exchange="",
+                routing_key="patching",
+                body=json.dumps(message),
+                properties=BasicProperties(
+                    delivery_mode=2,
+                ),
+            )
+
+        except:
+            logging.info(f"Failed to generate a response for {message}")
+            to_ack = False
+
+        sleep(5)
+
+        if to_ack:
+            ch.basic_ack(delivery_tag=method.delivery_tag)
     except:
-        logging.info(f"Failed to generate a response for {message}")
-        to_ack = False
+        sleep(15)
+        
+        errors = Error(errors.count + 1, timestamp) 
 
-    sleep(5)
-
-    if to_ack:
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-
+        logging.info(f"API error")
 
 model = genai.GenerativeModel("gemini-pro")
 credentials = PlainCredentials(*RABBITMQ_CREDENTIALS)

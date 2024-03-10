@@ -1,4 +1,5 @@
 from os import environ
+from collections import namedtuple
 
 rabbitmq_pass_filepath = environ.get("RABBITMQ_DEFAULT_PASS_FILE")
 gemini_token_filepath = environ.get("GEMINI_TOKEN_FILE")
@@ -30,3 +31,5 @@ Notes:
 - The modified function should maintain the same functionality as the original.
 - Do not modify the function signature (name and arguments).
 """
+
+Error = namedtuple("Error", ["count", "timestamp"])
