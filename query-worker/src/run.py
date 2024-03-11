@@ -24,6 +24,8 @@ genai.configure(api_key=GEMINI_TOKEN)
 errors = Error(0, 0)
 
 def query_gemini(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes):
+    global errors
+
     message = json.loads(body)
     timestamp = int(time())
 

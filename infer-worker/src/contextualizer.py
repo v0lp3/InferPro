@@ -107,7 +107,7 @@ class ContextParser:
 
             for report in procedure_vulnerabilities:
                 vulnerable_code_lines.insert(
-                    report.line - procedure_line,
+                    max(0, report.line - procedure_line - 1),
                     f"// [Unsafe] {report.bug_type}: {report.qualifier}",
                 )
 
@@ -143,9 +143,9 @@ class ContextParser:
 
             source_path = source_path.split("repository/")[1]
             patch = difflib.unified_diff(
-                source.splitlines(),
-                patched_source.splitlines(),
+                source.splitlines(keepends=True),
+                patched_source.splitlines(keepends=True),
                 fromfile=source_path,
                 tofile=source_path,
             )
-            return "\n".join(patch)
+            return "".join(patch)

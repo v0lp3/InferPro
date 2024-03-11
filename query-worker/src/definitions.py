@@ -20,15 +20,13 @@ RABBITMQ_CREDENTIALS = (
     RABBITMQ_PASSWORD
 )
 
-INSTRUCTION = """Main Task: Replace the unsafe code C code function to improve its security.
+INSTRUCTION = """Task: Replace the suggested [Unsafe] C code function to improve its security.
 
 Output: Return only the modified function as a code block formatted in markdown for C code.
 
 Notes:
 
-- The modified function must be valid C code.
-- Minimize changes to the original code.
-- The modified function should maintain the same functionality as the original.
+- The output must be valid and safe C code and address security vulnerabilities.
 - Do not modify the function signature (name and arguments).
 """
 
