@@ -6,7 +6,10 @@
 - This project was created for the course `Ingegneria dei Sistemi Distribuiti` at UniCT.
 - The patches are generated using the [Gemini Pro API](https://ai.google.dev/)
 
-## Examples
+## Example
+
+> [!NOTE]  
+> Different execution can produce different results.
 
 Given the following code as input:
 
