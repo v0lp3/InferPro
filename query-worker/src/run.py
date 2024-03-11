@@ -21,7 +21,7 @@ logging.basicConfig(
 genai.configure(api_key=GEMINI_TOKEN)
 
 
-errors = Error(0, int(time()))
+errors = Error(0, 0)
 
 def query_gemini(ch: Channel, method: Basic.Deliver, _: BasicProperties, body: bytes):
     message = json.loads(body)
